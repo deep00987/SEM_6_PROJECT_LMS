@@ -374,7 +374,7 @@ app.get('/download_content/:name', async(req, res) =>{
     }
   }
 
-  res.send("File not found")
+  res.status(404).send("File not found")
 
 
 })
