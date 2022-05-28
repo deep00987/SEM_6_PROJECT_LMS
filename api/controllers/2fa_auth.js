@@ -1,0 +1,217 @@
+const db = require("../../database")
+const bcrypt = require('bcryptjs')
+const util = require('util');
+const validator = require('validator');
+const jwt = require("jsonwebtoken");
+const res = require("express/lib/response");
+const query = util.promisify(db.query).bind(db);
+const qrcode = require('qrcode')
+const { authenticator } = require('otplib');
+const { verify } = require("crypto");
+const session = require("express-session");
+const path = require('path')
+const nodemailer = require("nodemailer");
+const ejs = require("ejs");
+
+
+
+async function login_user_2fa(request, response){
+  console.log("@AUT_TEST", request.body)
+  let email = request.body.email
+  let pass = request.body.password
+  console.log(request.body)
+  if(!email || !pass){
+      return ({
+          "success": 0, 
+          "msg": "bad request"
+      })
+  }else{
+
+    if(!validator.isEmail(email) || !pass.match(/^([a-zA-Z0-9 _@]+)$/)) {
+      return ({
+        "success": 0, 
+        "msg": "bad request"
+      })
+    }
+
+    
+    const sql1 = `SELECT student_id, fname, lname, email, password, auth_secret FROM student WHERE email = ?`
+    
+    let result; 
+
+    try {
+      result = await query(sql1, [email])
+    } catch (error) {
+      return ({
+        "success": 0, 
+        "msg": "something went wrong"
+      })
+    }
+
+
+    if(result.length === 0){
+      return ({
+        "success": 0, 
+        "msg": "User doesnt exist"
+      })
+    }
+
+    if (!bcrypt.compareSync(pass, result[0].password)) {
+      return ({
+        "success": 0,
+        "msg": "Login credential doesn't match!"
+      })
+    }
+    //const result_data = {student_id: result[0].student_id, email: result[0].email}
+    const newSecret = authenticator.generateSecret()
+    let result2;
+
+    try {
+      const sql2 = `UPDATE student SET auth_secret = ? WHERE student_id = ? AND email = ?`
+      result2 = await query(sql2, [newSecret, result[0].student_id, result[0].email])
+    } catch (error) {
+      return ({
+        "success": 0, 
+        "msg": "something went wrong"
+      })
+    }
+
+    const qr = await qrcode.toDataURL(authenticator.keyuri(email, 'LMS APPLICATION', newSecret))
+    //console.log(qr)
+    let code = qr
+    request.session.email = result[0].email
+    request.session.student_id = result[0].student_id
+    
+    const sender_data = {fname: result[0].fname, lname: result[0].lname, email: result[0].email, qr_code: code }
+    console.log(sender_data)
+    
+    let sus = await send_mail_to_referer(sender_data)
+
+    //console.log(test_path)
+    return ({
+      "success": 1,
+      "qr_code": code,
+      
+    })
+
+
+
+  }
+}
+
+
+async function verify_2fa_login(req, res){
+  let email = req.session.email
+  let code = req.body.security_code.trim()
+  console.log(req.body)
+  console.log(req.session)
+  const sql1 = `SELECT student_id, email, auth_secret FROM student WHERE email = ?`
+  
+  if(!email){
+    return ({
+      "success": 0, 
+      "msg": "bad request"
+    })
+  }
+
+  if(!code){
+    return ({
+      "success": 0, 
+      "msg": "bad request"
+    })
+  }
+
+  if(!validator.isEmail(email)) {
+    return ({
+      "success": 0, 
+      "msg": "bad request"
+    })
+  }
+
+  let result;
+
+  try {
+    result = await query(sql1, [email])
+  } catch (error) {
+    return ({
+      "success": 0,
+      "msg": "something went wrong"
+    })
+  }
+
+  if (result.length === 0) {
+    return ({
+      "success": 0,
+      "msg": "User doesnt exist"
+    })
+  }
+  console.log(result[0].auth_secret)
+  if (!authenticator.check(code, result[0].auth_secret)) {
+    return ({
+      "success": 0,
+      "msg": "Invalid otp"
+    })
+  }
+  
+  const token = jwt.sign({
+    id: result[0].student_id,
+    is_staff: false,
+    email: result[0].email,
+  },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+  //req.session.destroy()
+  return ({
+    "success": 1,
+    "msg": "valid otp",
+    "data": token
+  })
+
+}
+
+
+
+
+
+async function send_mail_to_referer(sender_data) {
+  
+  const test_path = path.join(__dirname, '..', '..', 'template_views', 'dev_v2')
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.EMAIL_PASS,
+    }
+  });
+ 
+  console.log(sender_data)
+  const data = await ejs.renderFile(test_path + "/send_mail_template.ejs" , {data: sender_data});
+
+
+  let mailOptions = {
+    from: process.env.EMAIL, // sender address
+    subject: `Hi!, ${sender_data?.fname} ${sender_data?.lname}, new QR code generated for login verification`, // Subject line
+    text: `Scan the QR code to get the 6-digit security code`, // plaintext body
+    to: sender_data.email,
+    attachDataUrls: true,
+    html: data
+  }
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
+  });
+
+}
+
+
+
+
+
+
+
+module.exports = {login_user_2fa, verify_2fa_login}
