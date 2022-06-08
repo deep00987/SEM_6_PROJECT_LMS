@@ -11,6 +11,7 @@ require('dotenv').config()
 const fileUpload = require('express-fileupload');
 const session = require('express-session')
 const fs = require('fs')
+
 //define routers
 const studentRouter = require('./api/routes/students')
 const authRouter = require('./api/routes/auth')
@@ -26,7 +27,6 @@ const studentUtilRouter = require("./api/routes/util")
 const teacherUtilRouter = require("./api/teacher/routes/util")
 
 //lucid.app
-
 //configurations
 
 const storage = multer.diskStorage({
@@ -71,6 +71,7 @@ const upload_sec = multer({
 
 
 //middlewares
+
 const verifyCookie = require('./middleware/verifyCookie')
 const verifyTeacherCookie = require('./middleware/verifyTeacherCookie')
 const verifyCookieForApi = require('./middleware/verifyCookieForApi')
@@ -80,6 +81,7 @@ const {csrfProtection, csrfErrorHandlerForm} = require("./middleware/csrfProtect
 const parseForm = bodyParser.urlencoded({ extended: false })
 const {saveFileBuffer, saveFileBufferClassroom} = require("./middleware/saveFileBuffer")
 const res = require('express/lib/response')
+
 //connect to database
 db.connect(function(err) {
   if (err) throw err;
@@ -112,6 +114,7 @@ app.use(session({
 
 app.set('view engine', 'ejs')
 app.set('views', './template_views')
+
 //set up static files path
 app.use(express.static(static_path))
 app.use(express.static(uploads))

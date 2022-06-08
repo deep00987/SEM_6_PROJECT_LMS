@@ -160,18 +160,24 @@ async function verify_2fa_login_teacher(req, res){
 async function send_mail_to_referer(sender_data) {
   
   const test_path = path.join(__dirname, '..', '..', '..', 'template_views', 'dev_v2')
-  const {token} = await getGmailTokens()
+  //const {token} = await getGmailTokens()
 
   let transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    service: 'gmail',
     auth: {
-      type: 'OAuth2',
       user: process.env.EMAIL,
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,    
-    },
+      pass: process.env.EMAIL_PASS,
+    }
+    
+    // host: 'smtp.gmail.com',
+    // port: 465,
+    // secure: true,
+    // auth: {
+    //   type: 'OAuth2',
+    //   user: process.env.EMAIL,
+    //   clientId: process.env.GOOGLE_CLIENT_ID,
+    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET,    
+    // },
   });
  
   const data = await ejs.renderFile(test_path + "/send_mail_template.ejs" , {data: sender_data});
@@ -183,10 +189,10 @@ async function send_mail_to_referer(sender_data) {
     to: sender_data.email,
     attachDataUrls: true,
     html: data,
-    auth:{
-      refreshToken: process.env.REFERSH_TOKEN,
-      accessToken: token
-    },
+    // auth:{
+    //   refreshToken: process.env.REFERSH_TOKEN,
+    //   accessToken: token
+    // },
   }
 
   transporter.sendMail(mailOptions, function (error, info) {
