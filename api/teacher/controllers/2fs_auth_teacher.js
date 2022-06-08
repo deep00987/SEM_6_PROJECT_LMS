@@ -17,7 +17,7 @@ async function login_user_2fa_teacher(request, response){
   console.log("@AUT_TEST", request.body)
   let email = request.body.email
   let pass = request.body.password
-  console.log(request.body)
+  
   if(!email || !pass){
       return ({
           "success": 0, 
@@ -97,8 +97,7 @@ async function login_user_2fa_teacher(request, response){
 async function verify_2fa_login_teacher(req, res){
   let email = req.session.email
   let code = req.body.security_code.trim()
-  console.log(req.body)
-  console.log(req.session)
+  
   const sql1 = `SELECT teacher_id, email, auth_secret FROM teacher WHERE email = ?`
   
   if(!email || !code){
@@ -163,14 +162,18 @@ async function send_mail_to_referer(sender_data) {
   
   const test_path = path.join(__dirname, '..', '..', '..', 'template_views', 'dev_v2')
   let transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
+      type: 'OAuth2',
       user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS,
-    }
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,    
+    },
   });
  
-  console.log(sender_data)
+  
   const data = await ejs.renderFile(test_path + "/send_mail_template.ejs" , {data: sender_data});
 
 
@@ -180,7 +183,11 @@ async function send_mail_to_referer(sender_data) {
     text: `Scan the QR code to get the 6-digit security code`, // plaintext body
     to: sender_data.email,
     attachDataUrls: true,
-    html: data
+    html: data,
+    auth:{
+      refreshToken: process.env.REFERSH_TOKEN,
+      accessToken: process.env.ACCESS_TOKEN
+    },
   }
 
   transporter.sendMail(mailOptions, function (error, info) {

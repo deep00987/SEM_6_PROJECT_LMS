@@ -170,22 +170,26 @@ async function verify_2fa_login(req, res){
 
 }
 
-
-
-
-
 async function send_mail_to_referer(sender_data) {
   
   const test_path = path.join(__dirname, '..', '..', 'template_views', 'dev_v2')
   let transporter = nodemailer.createTransport({
-    service: 'gmail',
+    // service: 'gmail',
+    // auth: {
+    //   user: process.env.EMAIL,
+    //   pass: process.env.EMAIL_PASS,
+    // }
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
+      type: 'OAuth2',
       user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS,
-    }
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,    
+    },
   });
- 
-  console.log(sender_data)
+
   const data = await ejs.renderFile(test_path + "/send_mail_template.ejs" , {data: sender_data});
 
 
@@ -195,7 +199,11 @@ async function send_mail_to_referer(sender_data) {
     text: `Scan the QR code to get the 6-digit security code`, // plaintext body
     to: sender_data.email,
     attachDataUrls: true,
-    html: data
+    html: data,
+    auth:{
+      refreshToken: process.env.REFERSH_TOKEN,
+      accessToken: process.env.ACCESS_TOKEN
+    },
   }
 
   transporter.sendMail(mailOptions, function (error, info) {
