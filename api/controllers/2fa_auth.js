@@ -16,10 +16,10 @@ const ejs = require("ejs");
 
 
 async function login_user_2fa(request, response){
-  console.log("@AUT_TEST", request.body)
+  
   let email = request.body.email
   let pass = request.body.password
-  console.log(request.body)
+  
   if(!email || !pass){
       return ({
           "success": 0, 
@@ -62,7 +62,7 @@ async function login_user_2fa(request, response){
         "msg": "Login credential doesn't match!"
       })
     }
-    //const result_data = {student_id: result[0].student_id, email: result[0].email}
+    
     const newSecret = authenticator.generateSecret()
     let result2;
 
@@ -77,24 +77,20 @@ async function login_user_2fa(request, response){
     }
 
     const qr = await qrcode.toDataURL(authenticator.keyuri(email, 'LMS APPLICATION', newSecret))
-    //console.log(qr)
+   
     let code = qr
     request.session.email = result[0].email
     request.session.student_id = result[0].student_id
     
     const sender_data = {fname: result[0].fname, lname: result[0].lname, email: result[0].email, qr_code: code }
-    console.log(sender_data)
     
     let sus = await send_mail_to_referer(sender_data)
 
-    //console.log(test_path)
     return ({
       "success": 1,
       "qr_code": code,
       
     })
-
-
 
   }
 }
@@ -145,7 +141,7 @@ async function verify_2fa_login(req, res){
       "msg": "User doesnt exist"
     })
   }
-  console.log(result[0].auth_secret)
+  
   if (!authenticator.check(code, result[0].auth_secret)) {
     return ({
       "success": 0,
@@ -215,11 +211,5 @@ async function send_mail_to_referer(sender_data) {
   });
 
 }
-
-
-
-
-
-
 
 module.exports = {login_user_2fa, verify_2fa_login}
