@@ -12,7 +12,7 @@ const session = require("express-session");
 const path = require('path')
 const nodemailer = require("nodemailer");
 const ejs = require("ejs");
-
+const {getGmailTokens} = require('../../google_externals')
 
 
 async function login_user_2fa(request, response){
@@ -169,6 +169,8 @@ async function verify_2fa_login(req, res){
 async function send_mail_to_referer(sender_data) {
   
   const test_path = path.join(__dirname, '..', '..', 'template_views', 'dev_v2')
+  const {token} = await getGmailTokens()
+  console.log(token)
   let transporter = nodemailer.createTransport({
     // service: 'gmail',
     // auth: {
@@ -198,7 +200,7 @@ async function send_mail_to_referer(sender_data) {
     html: data,
     auth:{
       refreshToken: process.env.REFERSH_TOKEN,
-      accessToken: process.env.ACCESS_TOKEN
+      accessToken: token
     },
   }
 
