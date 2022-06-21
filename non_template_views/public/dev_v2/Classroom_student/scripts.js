@@ -3,6 +3,7 @@ const commentItem = document.querySelectorAll(".post__reply__container")
 const comment__util__btn = document.querySelectorAll(".util__comment__btn__mui")
 const post__util__btn = document.querySelectorAll(".util__post__btn__mui")
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+const class__leave__btn = document.querySelector('.student__remove__class__btn')
 
 const modal_close_btn = document.querySelector(".custom__close__btn")
 const modal_wrapper = document.querySelector(".custom__modal__wrapper")
@@ -22,6 +23,7 @@ post__util__btn.forEach(btn => {
   btn.addEventListener("click", handlePostUtil.bind())
 })
 
+class__leave__btn.addEventListener("click", handleClassDelete.bind())
 
 posts.forEach(post=>{
   post.addEventListener("click", processPostEvent.bind())
@@ -143,7 +145,36 @@ async function handleCommmentUtil(e){
   console.log(data)
 }
 
+function handleClassDelete(e){
+  const class_room_id = +e.target.closest(".student__remove__class__btn").getAttribute("data_c_r_id")
+  console.log(e.target, class_room_id)
 
+  const data = {class_room_id : class_room_id}
+  console.log(data)
+
+  fetch("/api/classroom/leave", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      'CSRF-Token': CSRF_TOKEN,
+    },
+    body: JSON.stringify(data)
+  }).then(response => response.json())
+    .then(data => {
+      console.log(data)
+      //alert(data.msg)
+      let header = (data?.success === 1) ? `Action Successful` : `Action Unsuccessful`
+      let msg = (data?.success === 1) ? `Class left successfully!` : data?.msg
+      const result = {
+        "header": header,
+        "msg": msg
+      }
+      //processModalOpen(result)
+      window.location.href = '/development/student/classes'
+    })
+
+
+}
 
 
 async function processModalClose(){
