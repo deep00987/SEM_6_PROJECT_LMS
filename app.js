@@ -186,7 +186,7 @@ app.post('/verify_student_login',bodyParser.urlencoded({ extended: false }), csr
   const token = result?.data
   res.cookie("JWT_COOKIE",token,{
     httpOnly: true,
-    secure:true,
+
   })
   // console.log(req.session)
   // result["CSRF_TOKEN"] = req.csrfToken()
