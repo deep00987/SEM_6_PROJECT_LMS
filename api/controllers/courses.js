@@ -9,9 +9,9 @@ const query = util.promisify(db.query).bind(db);
 
 /**
  * this function maps students with the requestion courses
- * @param {object} req - thr request object 
+ * @param {object} req - the request object 
  * @param {object} res - the response object
- * @returns {object} res with satus code w.r.t operations
+ * @returns {object} res with status code w.r.t operations
  */
 async function mapStudentCourse(req, res){
 
@@ -56,9 +56,9 @@ async function mapStudentCourse(req, res){
 
 /**
  * this function un-maps students with the requestion courses
- * @param {object} req - thr request object 
+ * @param {object} req - the request object 
  * @param {object} res - the response object
- * @returns {object} res with satus code w.r.t operations
+ * @returns {object} res with status code w.r.t operations
  */
 async function unmapStudentCourse(req, res){
 

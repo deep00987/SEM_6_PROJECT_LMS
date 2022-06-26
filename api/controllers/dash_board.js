@@ -9,9 +9,9 @@ const query = util.promisify(db.query).bind(db);
 
 /**
  * function for accesing the users dashboard data
- * @param {object} req - thr request object 
+ * @param {object} req - the request object 
  * @param {object} res - the response object
- * @returns {object} res with satus code w.r.t operations
+ * @returns {object} res with status code w.r.t operations
  */
 function getDashBoardData(req, res){
     let data = req.body.client.id
@@ -35,9 +35,9 @@ function getDashBoardData(req, res){
 
 /**
  * function for accesing the user data
- * @param {object} req - thr request object 
+ * @param {object} req - the request object 
  * @param {object} res - the response object
- * @returns {object} res with satus code w.r.t operations
+ * @returns {object} res with status code w.r.t operations
  */
 async function getStudentData(req, res){
   let user_id = req.body.client.id;

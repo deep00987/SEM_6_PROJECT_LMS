@@ -1,6 +1,6 @@
 
 const express = require('express')
-const {getUsers, getUserById, geCurrentUser} = require('../controllers/students')
+const {getUsers, getUserById, getCurrentUser} = require('../controllers/students')
 const verifyCookieForApi = require('../../middleware/verifyCookieForApi')
 const router = express.Router()
 const verifyToken = require("../../middleware/verifyToken")
@@ -8,7 +8,7 @@ const verifyToken = require("../../middleware/verifyToken")
 //router.get('/',verifyCookieForApi, getUsers)
 
 
-router.get('/current',verifyCookieForApi, geCurrentUser)
+router.get('/current',verifyCookieForApi, getCurrentUser)
 //router.get('/:id',verifyToken, getUserById)
 
 
