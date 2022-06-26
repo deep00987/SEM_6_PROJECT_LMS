@@ -1,3 +1,8 @@
+/**  
+* @module 2fa_auth
+* module for user Authentication with 2-step verificaiton
+*/ 
+
 const db = require("../../database")
 const bcrypt = require('bcryptjs')
 const util = require('util');
@@ -14,12 +19,21 @@ const nodemailer = require("nodemailer");
 const ejs = require("ejs");
 const {getGmailTokens} = require('../../google_externals')
 
+/** 
+ * @module 2fa_auth
+ * function to perform user login
+ * @params {object} request - the request object 
+ * @params {object} response - the response object
+ * @returns {object}  
+ */
 
 async function login_user_2fa(request, response){
   
   let email = request.body.email
   let pass = request.body.password
   
+  //input validation
+
   if(!email || !pass){
       return ({
           "success": 0, 
@@ -34,10 +48,10 @@ async function login_user_2fa(request, response){
       })
     }
 
-    
     const sql1 = `SELECT student_id, fname, lname, email, password, auth_secret FROM student WHERE email = ?`
-    
     let result; 
+
+    //check if user exist with the following email
 
     try {
       result = await query(sql1, [email])
@@ -56,13 +70,17 @@ async function login_user_2fa(request, response){
       })
     }
 
+    //if user exist compare password hash
+
     if (!bcrypt.compareSync(pass, result[0].password)) {
       return ({
         "success": 0,
         "msg": "Login credential doesn't match!"
       })
     }
-    
+
+    // generate new auth-secret string and store w.r.t user
+
     const newSecret = authenticator.generateSecret()
     let result2;
 
@@ -76,14 +94,17 @@ async function login_user_2fa(request, response){
       })
     }
 
+    //generate authentication QR code w.r.t auth-secret string 
+
     const qr = await qrcode.toDataURL(authenticator.keyuri(email, 'LMS APPLICATION', newSecret))
    
     let code = qr
     request.session.email = result[0].email
     request.session.student_id = result[0].student_id
-    
     const sender_data = {fname: result[0].fname, lname: result[0].lname, email: result[0].email, qr_code: code }
-    
+
+    //send QR code to user via registered email address
+
     let sus = await send_mail_to_referer(sender_data)
 
     return ({
@@ -95,13 +116,20 @@ async function login_user_2fa(request, response){
   }
 }
 
+/** 
+ * @module 2fa_auth
+ * function to verify user login
+ * @params {object} request - the request object 
+ * @params {object} response - the response object
+ * @returns {object}  
+ */
 
 async function verify_2fa_login(req, res){
   let email = req.session.email
   let code = req.body.security_code.trim()
-  console.log(req.body)
-  console.log(req.session)
   const sql1 = `SELECT student_id, email, auth_secret FROM student WHERE email = ?`
+
+  //input validation
   
   if(!email){
     return ({
@@ -125,7 +153,7 @@ async function verify_2fa_login(req, res){
   }
 
   let result;
-
+  // check for existing user with given user email address
   try {
     result = await query(sql1, [email])
   } catch (error) {
@@ -141,14 +169,14 @@ async function verify_2fa_login(req, res){
       "msg": "User doesnt exist"
     })
   }
-  
+  //check for valid input code against auth-secret
   if (!authenticator.check(code, result[0].auth_secret)) {
     return ({
       "success": 0,
       "msg": "Invalid otp"
     })
   }
-  
+  //sign and genrate JWT token
   const token = jwt.sign({
     id: result[0].student_id,
     is_staff: false,
@@ -166,8 +194,15 @@ async function verify_2fa_login(req, res){
 
 }
 
+/** 
+ * @module 2fa_auth
+ * function to send mail with QR code to the user
+ * @params {object} sender_data - the object cotains user's fname, lname, email, QR_code 
+ * @return {undefined}
+ */
+
 async function send_mail_to_referer(sender_data) {
-  
+  //path at which email temeplate is located
   const test_path = path.join(__dirname, '..', '..', 'template_views', 'dev_v2')
   //const {token} = await getGmailTokens()
   
@@ -188,6 +223,7 @@ async function send_mail_to_referer(sender_data) {
     // },
   });
 
+  //render the email template with sender data 
   const data = await ejs.renderFile(test_path + "/send_mail_template.ejs" , {data: sender_data});
 
 

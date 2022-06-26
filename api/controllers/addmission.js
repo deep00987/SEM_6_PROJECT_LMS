@@ -1,9 +1,19 @@
+/**
+ * @module Addmission
+ * handles user's addmission to different terms
+ */
+
 const res = require("express/lib/response")
 const db = require("../../database")
 const util = require('util');
-
-
 const query = util.promisify(db.query).bind(db);
+
+/**
+ * function to perfrom user admission to terms
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {object} res with status codes w.r.t opeartion results 
+ */
 
 async function getAddmission(req, res){
   const student_id = req.body.client.id
@@ -22,11 +32,10 @@ async function getAddmission(req, res){
     SET term_id = ${term_id}
     where student_id = ${student_id};
   `
-
+  // check if the user is already admited in the requesting term
   try {
     rows = await query(sql1)
   } catch (error) {
-    console.log(error)
     return res.status(404).json({
       "success": 0,
       "msg": "something went wrong"
@@ -43,9 +52,7 @@ async function getAddmission(req, res){
   //delete courses of the previes term mapped with this user
   try {
     rows = await query(sql2)
-    console.log(rows)
   } catch (error) {
-    console.log(error)
     return res.status(404).json({
       "success": 0,
       "msg": "something went wrong"
@@ -55,19 +62,16 @@ async function getAddmission(req, res){
   //update term
   try {
     rows = await query(sql3)
-    console.log(rows)
     return res.status(200).json({
       "success": 1,
       "msg": "Addmission successful"
     })
   } catch (error) {
-    console.log(error)
     return res.status(404).json({
       "success": 0,
       "msg": "something went wrong"
     })
   }
-
   
 }
 

@@ -1,3 +1,9 @@
+/**
+ * @module auth
+ * user authentication module for build v1: function loginUser is not used anymore: refer 2fa_auth 
+ * 2fa_auth module is used for login and verify_login operations
+ */
+
 const db = require('../../database')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
@@ -7,8 +13,16 @@ require('dotenv').config()
 const util = require('util')
 const query = util.promisify(db.query).bind(db);
 
+
+/**
+ * 
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {object} res with status code w.r.t results 
+ */
 async function registerUser(req, res){
-  
+
+    //genrate auth-secret string for login verification
     const secret_key = authenticator.generateSecret()
     const dept = {
       'CS' : 1,
@@ -16,25 +30,17 @@ async function registerUser(req, res){
     }
 
     let data = req.body
-    console.log(req.body)
+    
+    //input validation
 
     if(!data.email || !data.password || !data.fname || !data.lname || !data.department || !data.year){
-      console.log("test")
       return res.status(400).json({
         "success": 0, 
         "msg": "Bad request"
       })
     }
-
-      // if(!validator.isEmail(data.email) || !data.password.match(/^([a-zA-Z0-9 _@]+)$/) || !data.fname.match(/^([a-zA-Z]+)$/) || !data.fname.match(/^([a-zA-Z]+)$/)) {
-      //   return ({
-      //     "success": 0, 
-      //     "msg": "bad request"
-      //   })
-      // }
     
     if (!data.fname.match(/^([a-zA-Z]+)$/)) {
-      console.log("test")
       return res.status(400).json({
         "success": 0,
         "msg": "bad name format"
@@ -42,17 +48,13 @@ async function registerUser(req, res){
     }
 
     if (!data.lname.match(/^([a-zA-Z]+)$/)) {
-      console.log("test")
       return res.status(400).json({
         "success": 0,
         "msg": "bad name format"
       })
     }
     
-
-
     if(!validator.isEmail(data.email)){
-      console.log("test")
       return res.status(400).json({
         "success": 0, 
         "msg": "Bad email format"
@@ -60,18 +62,14 @@ async function registerUser(req, res){
     }
 
     if(!data.password.match(/^([a-zA-Z0-9 _@]+)$/)){
-      console.log("test")
       return res.status(400).json({
         "success": 0, 
         "msg": "bad password format"
       })
     }
     
+    //perform registration operation
     
-
-    
-    
-
     let department = dept[req.body.department]
     const hash = bcrypt.hashSync(data.password, 10);
 
@@ -93,7 +91,6 @@ async function registerUser(req, res){
         "msg": "user created"
       })
     } catch (error) {
-      console.log(error)
       return res.status(400).json({
           "success": 0, 
           "msg": "user creation unsuccessful"
@@ -103,11 +100,16 @@ async function registerUser(req, res){
 
 }
 
+/**
+ * function to perform user login: not used anymore, refer 2fa_auth 
+ * @param {object} request 
+ * @param {object} response 
+ * @returns {object}
+ */
 
 function loginUser(request, response){
     let email = request.body.email
     let pass = request.body.password
-    console.log(request.body)
     if(!email || !pass){
         return response.status(400).json({
             "success": 0, 
@@ -119,8 +121,6 @@ function loginUser(request, response){
             ,[email],
             (err, result,fields)=>{
                 if(!err && result.length > 0){
-                    console.log(result[0])
-
                     if(!bcrypt.compareSync(pass, result[0].password)){
                       return response.status(401).json({
                         "success": 0, 
@@ -135,8 +135,6 @@ function loginUser(request, response){
                         process.env.JWT_SECRET,
                         { expiresIn: '1h' }
                       );
-                    
-                      console.log(token)
                       response.cookie("JWT_COOKIE",token,{
                           httpOnly: true
                       })
@@ -149,7 +147,6 @@ function loginUser(request, response){
                     }
                    
                 }else{
-                    console.log(err)
                     return response.status(404).json({
                         "success": 0, 
                         "msg": "User not found"
@@ -160,8 +157,13 @@ function loginUser(request, response){
     }
 }
 
+/**
+ * fucntion to perform logut operation
+ * @param {object} request 
+ * @param {object} response 
+ * @returns {object}
+ */
 function logoutUser(request, response){
-  console.log("working")
   const token = request.cookies.JWT_COOKIE
   if(token){
     response.clearCookie("JWT_COOKIE",{
