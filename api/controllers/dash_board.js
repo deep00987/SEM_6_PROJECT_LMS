@@ -1,23 +1,30 @@
+/**
+ * @module dashboard 
+ * Module for accessing the user data 
+ */
 const res = require("express/lib/response")
 const db = require("../../database")
 const util = require('util')
-
 const query = util.promisify(db.query).bind(db);
 
+/**
+ * function for accesing the users dashboard data
+ * @param {object} req - thr request object 
+ * @param {object} res - the response object
+ * @returns {object} res with satus code w.r.t operations
+ */
 function getDashBoardData(req, res){
     let data = req.body.client.id
-    
     const sql = `SELECT fname,lname,term_id,dept_id,email FROM student WHERE student_id = ${data}`
+
     db.query(sql, (err, result, fields)=>{
         if(!err && result.length > 0){
-            //console.log(result.length)
             return res.status(200).json({
                 'success': 1,
                 'data': result
             })
             
         }else{
-            console.log(err)
             return res.status(500).json({
                 'success': 0,
                 'data': ''
@@ -26,6 +33,12 @@ function getDashBoardData(req, res){
     })
 }
 
+/**
+ * function for accesing the user data
+ * @param {object} req - thr request object 
+ * @param {object} res - the response object
+ * @returns {object} res with satus code w.r.t operations
+ */
 async function getStudentData(req, res){
   let user_id = req.body.client.id;
   let result = {};
@@ -72,23 +85,17 @@ async function getStudentData(req, res){
     AND student_class.student_id = ${user_id};
   
   `
-
-
   try {
     rows = await query(sql0)
-    console.log(rows)
     result["student_info"] = JSON.parse(JSON.stringify(rows))
   } catch (error) {
-    console.log(error)
     return res.status(404).json({"student_info":[]})
   }
 
   try {
     rows = await query(sql1)
-    console.log(rows)
     result["available_courses"] = JSON.parse(JSON.stringify(rows))
   } catch (error) {
-    console.log(error)
     return res.status(404).json({"courses_available":[]})
   }
 
@@ -96,7 +103,6 @@ async function getStudentData(req, res){
     rows = await query(sql2)
     result["courses_enrolled"] = JSON.parse(JSON.stringify(rows))
   } catch (error) {
-    console.log(error)
     return res.status(404).json({"courses_enrolled":[]})
   }
 
@@ -104,7 +110,6 @@ async function getStudentData(req, res){
     rows = await query(sql3)
     result["classrooms_for_courses"] = JSON.parse(JSON.stringify(rows))
   } catch (error) {
-    console.log(error)
     return res.status(404).json({"classrooms_for_courses":[]})
   }
 
@@ -112,31 +117,11 @@ async function getStudentData(req, res){
     rows = await query(sql4)
     result["class_rooms_joined"] = JSON.parse(JSON.stringify(rows))
   } catch (error) {
-    console.log(error)
     return res.status(404).json({"class_rooms_joined":[]})
   }
 
   return res.status(200).json(result)
-  // console.log(course)
-
-  // for(let i of course){
-  //   console.log(i.course_id)
-  //   sql2 = `
-  //     INSERT INTO student_course (student_id, course_id)
-  //     VALUES(${user_id}, ${i.course_id});
-  //   `   
-  //   try {
-  //     console.log(sql2)
-  //     const result = await query(sql2)
-  //     console.log(result)
-  //   } catch (error) {
-  //     throw err 
-  //   }  
-  // }
-
 
 }
-
-
 
 module.exports = {getDashBoardData, getStudentData}
