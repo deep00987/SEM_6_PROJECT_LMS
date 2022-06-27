@@ -11,7 +11,6 @@ const query = util.promisify(db.query).bind(db);
 
 /**
  * function for creating a new class/classRoom for user type: teacher
- * Unused_function refer module 2fs_auth_teacher
  * @param {object} request - the request object
  * @param {object} response - the reponse object
  * @returns {object} 
@@ -84,7 +83,6 @@ async function createClassRoom(request, response){
 
 /**
  * function for posting comments in a post for user type: teacher
- * Unused_function refer module 2fs_auth_teacher
  * @param {object} request - the request object
  * @param {object} response - the reponse object
  * @returns {object} 
@@ -119,7 +117,6 @@ async function postClassComment(request, response){
 
 /**
  * function for deleting a comment for user type: teacher
- * Unused_function refer module 2fs_auth_teacher
  * @param {object} request - the request object
  * @param {object} response - the reponse object
  * @returns {object} 
@@ -183,7 +180,6 @@ async function deleteClassComment(req, res){
 
 /**
  * function for deleting a post for user type: teacher
- * Unused_function refer module 2fs_auth_teacher
  * @param {object} request - the request object
  * @param {object} response - the reponse object
  * @returns {object} 
@@ -248,7 +244,6 @@ async function deleteClassPost(req, res){
 
 /**
  * function for deleting a classroom for user type: teacher
- * Unused_function refer module 2fs_auth_teacher
  * @param {object} request - the request object
  * @param {object} response - the reponse object
  * @returns {object} 
