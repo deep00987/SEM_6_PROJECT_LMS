@@ -1,3 +1,6 @@
+/**
+ * student dashboard routes 
+ */
 const express = require('express')
 const {getDashBoardData, getStudentData} = require('../controllers/dash_board')
 const router = express.Router()

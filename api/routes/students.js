@@ -1,4 +1,6 @@
-
+/**
+ * student routes 
+ */
 const express = require('express')
 const {getUsers, getUserById, getCurrentUser} = require('../controllers/students')
 const verifyCookieForApi = require('../../middleware/verifyCookieForApi')

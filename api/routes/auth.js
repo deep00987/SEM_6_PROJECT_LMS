@@ -1,3 +1,6 @@
+/**
+ * student auth router v1.0 
+ */
 const express = require('express')
 const router = express.Router()
 
