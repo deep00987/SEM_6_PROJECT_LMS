@@ -1,3 +1,8 @@
+/**
+ * @module auth
+ * Module for registration and general user authentication for use type: teacher
+ */
+
 const db = require('../../../database')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
@@ -7,18 +12,23 @@ const validator = require('validator')
 const util = require('util')
 const query = util.promisify(db.query).bind(db);
 
+/**
+ * function for performing registration operation for user type: teacher
+ * @param {object} request - the request object
+ * @param {object} response - the reponse object
+ * @returns {object} 
+ */
 async function registerTeacher(req, res){
+
     const secret_key = authenticator.generateSecret()
-    
     const dept = {
       'CS' : 1,
       'MATH' : 2,
     }
-
     let data = req.body
 
+    //input validation
     if(!data.email || !data.password || !data.fname || !data.lname || !data.department ){
-      console.log("test")
       return res.status(400).json({
         "success": 0, 
         "msg": "Bad request"
@@ -26,7 +36,6 @@ async function registerTeacher(req, res){
     }
 
     if (!data.fname.match(/^([a-zA-Z]+)$/)) {
-      console.log("test")
       return res.status(400).json({
         "success": 0,
         "msg": "bad name format"
@@ -34,7 +43,6 @@ async function registerTeacher(req, res){
     }
 
     if (!data.lname.match(/^([a-zA-Z]+)$/)) {
-      console.log("test")
       return res.status(400).json({
         "success": 0,
         "msg": "bad name format"
@@ -42,7 +50,6 @@ async function registerTeacher(req, res){
     }
 
     if(!validator.isEmail(data.email)){
-      console.log("test")
       return res.status(400).json({
         "success": 0, 
         "msg": "Bad email format"
@@ -50,19 +57,13 @@ async function registerTeacher(req, res){
     }
 
     if(!data.password.match(/^([a-zA-Z0-9 _@]+)$/)){
-      console.log("test")
       return res.status(400).json({
         "success": 0, 
         "msg": "bad password format"
       })
     }
 
-
-
-
-
-
-
+    // perform registration 
     let department = dept[req.body.department]
     const hash = bcrypt.hashSync(data.password, 10);
 
@@ -83,21 +84,24 @@ async function registerTeacher(req, res){
         "msg": "user created"
       })
     } catch (error) {
-      console.log(error)
       return res.status(400).json({
           "success": 0, 
           "msg": "user creation unsuccessful"
       })
     }
     
-
 }
 
-
+/**
+ * function for performing login operation for user type: teacher
+ * Unused_function refer module 2fs_auth_teacher
+ * @param {object} request - the request object
+ * @param {object} response - the reponse object
+ * @returns {object} 
+ */
 function loginTeacher(request, response){
     let email = request.body.email
     let pass = request.body.password
-    console.log(request.body)
     if(!email || !pass){
         return response.status(400).json({
             "success": 0, 
@@ -109,8 +113,6 @@ function loginTeacher(request, response){
             ,[email],
             (err, result,fields)=>{
                 if(!err && result.length > 0){
-                    console.log(result[0])
-
                     if(!bcrypt.compareSync(pass, result[0].password)){
                       return response.status(401).json({
                         "success": 0, 
@@ -125,8 +127,6 @@ function loginTeacher(request, response){
                         process.env.JWT_SECRET,
                         { expiresIn: '1h' }
                       );
-                    
-                      console.log(token)
                       response.cookie("JWT_COOKIE",token,{
                           httpOnly: true
                       })
@@ -139,7 +139,6 @@ function loginTeacher(request, response){
                     }
                    
                 }else{
-                    console.log(err)
                     return response.status(404).json({
                         "success": 0, 
                         "msg": "User not found"
@@ -150,8 +149,13 @@ function loginTeacher(request, response){
     }
 }
 
+/**
+ * function for performing logout operation for user type: teacher
+ * @param {object} request - the request object
+ * @param {object} response - the reponse object
+ * @returns {object} 
+ */
 function logoutStaff(request, response){
-  console.log("working")
   const token = request.cookies.JWT_COOKIE
   if(token){
     response.clearCookie("JWT_COOKIE",{

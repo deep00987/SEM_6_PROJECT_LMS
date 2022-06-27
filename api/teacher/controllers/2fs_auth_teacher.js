@@ -1,3 +1,8 @@
+/**
+ * @module 2fs_auth_teacher
+ * Module for login and 2 login verification for use type: teacher
+ */
+
 const db = require("../../../database")
 const bcrypt = require('bcryptjs')
 const util = require('util');
@@ -14,11 +19,18 @@ const nodemailer = require("nodemailer");
 const ejs = require("ejs");
 const {getGmailTokens} = require('../../../google_externals')
 
-
+/**
+ * function for performing login operation for user type: teacher
+ * @param {object} request - the request object
+ * @param {object} response - the reponse object
+ * @returns {object} 
+ */
 async function login_user_2fa_teacher(request, response){
+  
   let email = request.body.email
   let pass = request.body.password
-  
+
+  //input validation
   if(!email || !pass){
       return ({
           "success": 0, 
@@ -37,7 +49,7 @@ async function login_user_2fa_teacher(request, response){
     const sql1 = `SELECT teacher_id, fname, lname, email, password, auth_secret FROM teacher WHERE email = ?`
     
     let result; 
-
+    //check if the user the user creds are valid or not 
     try {
       result = await query(sql1, [email])
     } catch (error) {
@@ -60,10 +72,10 @@ async function login_user_2fa_teacher(request, response){
         "msg": "Login credential doesn't match!"
       })
     }
-    
+    //generate auth-secret for login verification
     const newSecret = authenticator.generateSecret()
     let result2;
-
+    //add a record with auth-secret w.r.t top current requesting user
     try {
       const sql2 = `UPDATE teacher SET auth_secret = ? WHERE teacher_id = ? AND email = ?`
       result2 = await query(sql2, [newSecret, result[0].teacher_id, result[0].email])
@@ -73,15 +85,15 @@ async function login_user_2fa_teacher(request, response){
         "msg": "something went wrong"
       })
     }
-
+    //generate QR CODE w.r.t generated auth-secret
     const qr = await qrcode.toDataURL(authenticator.keyuri(email, 'LMS APPLICATION', newSecret))
     
     let code = qr
     request.session.email = result[0].email
     request.session.student_id = result[0].teacher_id
-
     const sender_data = {fname: result[0].fname, lname: result[0].lname, email: result[0].email, qr_code: code }
-    console.log(sender_data)
+    
+    //send mail to requestiung user with QR code 
     let sus = await send_mail_to_referer(sender_data)
 
     return ({
@@ -93,19 +105,25 @@ async function login_user_2fa_teacher(request, response){
   }
 }
 
+/**
+ * function for performing login verification operation for user type: teacher
+ * @param {object} request - the request object
+ * @param {object} response - the reponse object
+ * @returns {object} 
+ */
 async function verify_2fa_login_teacher(req, res){
   let email = req.session.email
   let code = req.body.security_code.trim()
   
   const sql1 = `SELECT teacher_id, email, auth_secret FROM teacher WHERE email = ?`
   
+  //input validation
   if(!email || !code){
     return ({
       "success": 0, 
       "msg": "bad request"
     })
   }
-
 
   if(!validator.isEmail(email)) {
     return ({
@@ -131,14 +149,14 @@ async function verify_2fa_login_teacher(req, res){
       "msg": "User doesnt exist"
     })
   }
-  
+  //verify the input code against the auth-secret stored w.r.t user 
   if (!authenticator.check(code, result[0].auth_secret)) {
     return ({
       "success": 0,
       "msg": "Invalid otp"
     })
   }
-  
+  //generate and sign a JWT 
   const token = jwt.sign({
     id: result[0].teacher_id,
     is_staff: true,
@@ -156,9 +174,14 @@ async function verify_2fa_login_teacher(req, res){
 
 }
 
-
+/**
+ * function for sending mail with QR code for auththentication to user type: teacher
+ * @param {object} request - the request object
+ * @param {object} response - the reponse object
+ * @returns {undefined} 
+ */
 async function send_mail_to_referer(sender_data) {
-  
+  //path at which email tempate is defined 
   const test_path = path.join(__dirname, '..', '..', '..', 'template_views', 'dev_v2')
   //const {token} = await getGmailTokens()
 
@@ -179,7 +202,8 @@ async function send_mail_to_referer(sender_data) {
     //   clientSecret: process.env.GOOGLE_CLIENT_SECRET,    
     // },
   });
- 
+  
+  //render eamil template with sender data
   const data = await ejs.renderFile(test_path + "/send_mail_template.ejs" , {data: sender_data});
 
   let mailOptions = {
