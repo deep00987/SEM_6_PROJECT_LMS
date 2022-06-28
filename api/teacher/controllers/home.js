@@ -1,9 +1,18 @@
+/**
+ * @module home 
+ * THis module contain methods for getting home informations
+ */
 const res = require("express/lib/response")
 const db = require("../../../database")
 const util = require('util')
-
 const query = util.promisify(db.query).bind(db);
 
+/**
+ * this function gets the current teacher info and other teacher realted info
+ * @param {object} request - the request object
+ * @param {object} response - the response object
+ * @returns {object} 
+ */
 async function getTeacherInfo(request,response){
   let teacher_id = request.body.client.id
   let result= {};
@@ -37,14 +46,11 @@ async function getTeacherInfo(request,response){
     AND teacher.teacher_id = ${teacher_id};
   `
 
-
   let rows;
   try {
     rows = await query(sql1)
-    console.log(rows)
     result["teacher_info"] = JSON.parse(JSON.stringify(rows))
   } catch (error) {
-    console.log(error)
     return response.status(400).json({
       "success": 0,
       "msg":"something went wrong"
@@ -53,11 +59,9 @@ async function getTeacherInfo(request,response){
 
   try {
     rows = await query(sql2)
-    console.log(rows)
     result["available_courses"] = JSON.parse(JSON.stringify(rows))
     //return response.json({"success": 1, "data": JSON.parse(JSON.stringify(rows))})
   } catch (error) {
-    console.log(error)
     return response.status(400).json({
       "success": 0,
       "msg":"something went wrong"
@@ -66,11 +70,9 @@ async function getTeacherInfo(request,response){
 
   try {
     rows = await query(sql3)
-    console.log(rows)
     result["courses_teaching"] = JSON.parse(JSON.stringify(rows))
     //return response.json({"success": 1, "data": JSON.parse(JSON.stringify(rows))})
   } catch (error) {
-    console.log(error)
     return response.status(400).json({
       "success": 0,
       "msg":"something went wrong"
@@ -80,21 +82,15 @@ async function getTeacherInfo(request,response){
 
   try {
     rows = await query(sql4)
-    console.log(rows)
     result["class_rooms_created"] = JSON.parse(JSON.stringify(rows))
     //return response.json({"success": 1, "data": JSON.parse(JSON.stringify(rows))})
   } catch (error) {
-    console.log(error)
     return response.status(400).json({
       "success": 0,
       "msg":"something went wrong"
     })
   }
-
   return response.json(result)
-
 }
-
-
 
 module.exports = {getTeacherInfo }
